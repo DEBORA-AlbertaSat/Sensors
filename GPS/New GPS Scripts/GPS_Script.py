@@ -34,9 +34,15 @@ def nmeaParse(gpgga):
 	minute = round(float(gpgga[-8:]) / 60, 6)
 	return str(deg + minute)
 
+# Sends command to put in air mode, and high sensitivity
+txAir = "$PTNLSCR,,,,,,,3,,*5B\r\n"
+txHiSense = "$PTNLSFS,H,0*38\r\n"
+ser.write(txAir.encode())
+ser.write(txHiSense.encode())
+
 while 1:
 	opData = ser.readline().decode()
-	locTimestamp = "[" + time.strftime("%H:%M:%S,UTC%z", time.localtime()) + "] " # Get's local time + UTC offset
+	locTimestamp = "[" + time.strftime("%H:%M:%S,", time.localtime()) # Get's local time
 	print(locTimestamp + opData)
 		
 	# Checks for valid NMEA 0183 sentence:
@@ -47,6 +53,17 @@ while 1:
 
 		# Splitting NMEA Sentence
 		validGPS = opData.split(",")
+
+		# Gets GPS UTC time (of fix) from NMEA sentence (from satellite)
+		if len(validGPS[1]) != 0:
+			splitTime = (validGPS[1]).partition('.')
+			gpsTime = [(splitTime[j:j+2]) for j in range(0,len(splitTime),2)]
+			utcTime = "UTC " + gpsTime[0] + ":" + gpsTime[1] + ":" + gpsTime[2] + " ]"
+		else:
+			utcTime = "UTC --:--:--]" # If unable to retrieve UTC time from GPS Satallite
+
+		# Combines Local (RPi) + UTC Timestamp (GPS Satellite)
+		timestamps = locTimestamp + utcTime
 		
 		# Check if valid GPS fix + # of satellites
 		fixQuality = validGPS[6]
@@ -73,8 +90,8 @@ while 1:
 
 			# Writes Parsed GPS data to a separate file
 			with open(gpsFile, 'a', encoding = 'utf-8') as GPS_File:    
-				GPS_File.writelines(locTimestamp + loc + alt + sat + fixState + "\n")
+				GPS_File.writelines(timestamps + loc + alt + sat + fixState + "\n")
 
 		elif validGPS[0] == "$GPGGA" and len(validGPS[2]) == 0:
 			with open(gpsFile, 'a', encoding = 'utf-8') as GPS_File:
-				GPS_File.writelines(locTimestamp + "Lat/Lon: (XXX,XXX), Alt: XXX m, " + sat + fixState + "\n")
+				GPS_File.writelines(timestamps + "Lat/Lon: (XXX,XXX), Alt: XXX m, " + sat + fixState + "\n")
