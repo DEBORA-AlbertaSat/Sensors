@@ -35,6 +35,7 @@ def nmeaParse(gpgga):
 	return str(deg + minute)
 
 # Sends command to put in air mode, and high sensitivity
+time.sleep(0.7)
 txAir = "$PTNLSCR,,,,,,,3,,*5B\r\n"
 txHiSense = "$PTNLSFS,H,0*38\r\n"
 ser.write(txAir.encode())
@@ -55,12 +56,12 @@ while 1:
 		validGPS = opData.split(",")
 
 		# Gets GPS UTC time (of fix) from NMEA sentence (from satellite)
-		if len(validGPS[1]) != 0:
-			splitTime = (validGPS[1]).partition('.')
-			gpsTime = [(splitTime[j:j+2]) for j in range(0,len(splitTime),2)]
-			utcTime = "UTC " + gpsTime[0] + ":" + gpsTime[1] + ":" + gpsTime[2] + " ]"
+		if len(validGPS[1]) == 6+3:
+			splitTime = (validGPS[1]).split(".")
+			splitTime = splitTime[0]
+			utcTime = "(UTC " + splitTime[:2] + ":" + splitTime[2:4]+ ":" + splitTime[-2:] + ")] "
 		else:
-			utcTime = "UTC --:--:--]" # If unable to retrieve UTC time from GPS Satallite
+			utcTime = "(UTC --:--:--)] " # If unable to retrieve UTC time from GPS Satallite
 
 		# Combines Local (RPi) + UTC Timestamp (GPS Satellite)
 		timestamps = locTimestamp + utcTime
