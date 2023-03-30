@@ -54,45 +54,45 @@ while 1:
 
 		# Splitting NMEA Sentence
 		validGPS = opData.split(",")
-
-		# Gets GPS UTC time (of fix) from NMEA sentence (from satellite)
-		if len(validGPS[1]) == 6+3:
-			splitTime = (validGPS[1]).split(".")
-			splitTime = splitTime[0]
-			utcTime = "(UTC " + splitTime[:2] + ":" + splitTime[2:4]+ ":" + splitTime[-2:] + ")] "
-		else:
-			utcTime = "(UTC --:--:--)] " # If unable to retrieve UTC time from GPS Satallite
-
-		# Combines Local (RPi) + UTC Timestamp (GPS Satellite)
-		timestamps = locTimestamp + utcTime
-		
-		# Check if valid GPS fix + # of satellites
-		fixQuality = validGPS[6]
-		if fixQuality == "1":
-			fixState = "GPS Fix: Valid"
-		elif fixQuality == "2":
-			fixState = "GPS Fix: Valid (SBAS)"
-		else:
-			fixState = "GPS Fix: Invalid"
-
-		sat = "# of Sats: " + validGPS[7].lstrip("0") + ", "
-
-		# Extracting DDM latitude, longitude and altitude
-		if validGPS[0] == "$GPGGA" and len(validGPS[2]) != 0:
-			lat = nmeaParse(validGPS[2])
-			lon = nmeaParse(validGPS[4])
-			
-			loc = "Lat/Lon: (" + lat + "," + lon + "), "
-
-			if len(validGPS[9]) != 0:
-				alt = "Alt: " + validGPS[9].lstrip("0") + " m, "
+		if validGPS[0] == "$GPGGA":
+			# Gets GPS UTC time (of fix) from NMEA sentence (from satellite)
+			if len(validGPS[1]) == 6+3:
+				splitTime = (validGPS[1]).split(".")
+				splitTime = splitTime[0]
+				utcTime = "(UTC " + splitTime[:2] + ":" + splitTime[2:4]+ ":" + splitTime[-2:] + ")] "
 			else:
-				alt = "Alt: XXX m, "
+				utcTime = "(UTC --:--:--)] " # If unable to retrieve UTC time from GPS Satallite
 
-			# Writes Parsed GPS data to a separate file
-			with open(gpsFile, 'a', encoding = 'utf-8') as GPS_File:    
-				GPS_File.writelines(timestamps + loc + alt + sat + fixState + "\n")
+			# Combines Local (RPi) + UTC Timestamp (GPS Satellite)
+			timestamps = locTimestamp + utcTime
+			
+			# Check if valid GPS fix + # of satellites
+			fixQuality = validGPS[6]
+			if fixQuality == "1":
+				fixState = "GPS Fix: Valid"
+			elif fixQuality == "2":
+				fixState = "GPS Fix: Valid (SBAS)"
+			else:
+				fixState = "GPS Fix: Invalid"
 
-		elif validGPS[0] == "$GPGGA" and len(validGPS[2]) == 0:
-			with open(gpsFile, 'a', encoding = 'utf-8') as GPS_File:
-				GPS_File.writelines(timestamps + "Lat/Lon: (XXX,XXX), Alt: XXX m, " + sat + fixState + "\n")
+			sat = "# of Sats: " + validGPS[7].lstrip("0") + ", "
+
+			# Extracting DDM latitude, longitude and altitude
+			if len(validGPS[2]) > 0:
+				lat = nmeaParse(validGPS[2])
+				lon = nmeaParse(validGPS[4])
+				
+				loc = "Lat/Lon: (" + lat + "," + lon + "), "
+
+				if len(validGPS[9]) != 0:
+					alt = "Alt: " + validGPS[9].lstrip("0") + " m, "
+				else:
+					alt = "Alt: XXX m, "
+
+				# Writes Parsed GPS data to a separate file
+				with open(gpsFile, 'a', encoding = 'utf-8') as GPS_File:    
+					GPS_File.writelines(timestamps + loc + alt + sat + fixState + "\n")
+
+			else: # len(validGPS[2]) == 0:
+				with open(gpsFile, 'a', encoding = 'utf-8') as GPS_File:
+					GPS_File.writelines(timestamps + "Lat/Lon: (XXX,XXX), Alt: XXX m, " + sat + fixState + "\n")
