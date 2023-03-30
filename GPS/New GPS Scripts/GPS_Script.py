@@ -43,14 +43,14 @@ ser.write(txHiSense.encode())
 
 while 1:
 	opData = ser.readline().decode()
-	locTimestamp = "[" + time.strftime("%H:%M:%S,", time.localtime()) # Get's local time
-	print(locTimestamp + opData)
+	locTimestamp = "[" + time.strftime("%H:%M:%S", time.localtime()) # Get's local time
+	print(locTimestamp + "] " + opData)
 		
 	# Checks for valid NMEA 0183 sentence:
 	if opData[0] == "$":
 		# Writes Raw NMEA transmissions to a file
 		with open(nmeaFile, 'a', encoding = 'utf-8') as NMEA_File:    
-			NMEA_File.writelines(locTimestamp + opData)
+			NMEA_File.writelines(locTimestamp + "] " + opData)
 
 		# Splitting NMEA Sentence
 		validGPS = opData.split(",")
@@ -59,9 +59,9 @@ while 1:
 			if len(validGPS[1]) == 6+3:
 				splitTime = (validGPS[1]).split(".")
 				splitTime = splitTime[0]
-				utcTime = "(UTC " + splitTime[:2] + ":" + splitTime[2:4]+ ":" + splitTime[-2:] + ")] "
+				utcTime = ",(UTC " + splitTime[:2] + ":" + splitTime[2:4]+ ":" + splitTime[-2:] + ")] "
 			else:
-				utcTime = "(UTC --:--:--)] " # If unable to retrieve UTC time from GPS Satallite
+				utcTime = ",(UTC --:--:--)] " # If unable to retrieve UTC time from GPS Satallite
 
 			# Combines Local (RPi) + UTC Timestamp (GPS Satellite)
 			timestamps = locTimestamp + utcTime
