@@ -1,4 +1,3 @@
-
 from __future__ import print_function
 import qwiic_bme280
 import time
@@ -6,10 +5,9 @@ import sys
 
 import csv
 
-import array
-
 from datetime import datetime, timezone
 
+# Altitude is not an exact value. It is calculated from barometric pressure and is instead an equivalent value
 header = ["SysTime [UTC], Humidity [%RH], Pressure [Pa], Altitude [m], Temperature [C]"]
 
 data_out_file_name = "/home/albertasat/DEBORA/Sensors/Data/bme280_data/test_data.csv"
@@ -34,12 +32,15 @@ def init_bme280():
             file=sys.stderr)
         quit()
     bme.begin()
+
+    #Ensure this matches the current location's pressure (hPa) at sea level
+    bme.sea_level_pressure = 1013.25
+
     return bme
 
 
 def query_bme280(bme):
     #TODO: Check if data is valid. (i.e. length, data values, etc). If invalid return -1
-
     res = []
 
     humidity = bme.humidity
@@ -71,7 +72,7 @@ if __name__ == '__main__':
     print("\nBeginning data collection... \n")
     #Begin inf loop writing data to file.
     while True:
-        #fetch icm data. 
+        #fetch bme data. 
         #if -1 returned, data was not fetched and ignore this loop
         bme_data = query_bme280(bme_obj);
 
@@ -89,38 +90,3 @@ if __name__ == '__main__':
             write_to_file(data_row)
 
         time.sleep(0.1)
-
-
-
-# def runExample():
-
-#     print("\nSparkFun BME280 Sensor  Example 1\n")
-#     mySensor = qwiic_bme280.QwiicBme280()
-
-#     if mySensor.connected == False:
-#         print("The Qwiic BME280 device isn't connected to the system. Please check your connection", \
-#             file=sys.stderr)
-#         return
-
-#     mySensor.begin()
-
-#     while True:
-#         print("Humidity:\t%.3f" % mySensor.humidity)
-
-#         print("Pressure:\t%.3f" % mySensor.pressure)    
-
-#         print("Altitude:\t%.3f" % mySensor.altitude_feet)
-
-#         print("Temperature:\t%.2f" % mySensor.temperature_fahrenheit)       
-
-#         print("")
-
-#         time.sleep(1)
-
-
-# if __name__ == '__main__':
-#     try:
-#         runExample()
-#     except (KeyboardInterrupt, SystemExit) as exErr:
-#         print("\nEnding Example 1")
-# sys.exit(0)
