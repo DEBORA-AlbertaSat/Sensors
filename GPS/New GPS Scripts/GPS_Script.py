@@ -14,6 +14,17 @@ import time
 import serial
 import datetime
 
+import csv 
+
+#data is printed in this format
+# 
+#[16:22:43,(UTC --:--:--)] Lat/Lon: (XXX,XXX), Alt: XXX m, # of Sats: , GPS Fix: Invalid
+
+header = ["SysTime [UTC], Lat [dd], Lon [dd], Altitude [m], NumSats [int],GPS fix [int] "]
+
+data_out_file_name = "/home/albertasat/DEBORA/Sensors/Data/bme280_data/test_data.csv"
+
+
 Date = str(datetime.date.today())
 nmeaFile = "NMEA_Data_" + Date + ".txt"
 gpsFile = "GPS_Data_" + Date + ".txt"
@@ -96,3 +107,15 @@ while 1:
 			else: # len(validGPS[2]) == 0:
 				with open(gpsFile, 'a', encoding = 'utf-8') as GPS_File:
 					GPS_File.writelines(timestamps + "Lat/Lon: (XXX,XXX), Alt: XXX m, " + sat + fixState + "\n")
+
+
+def write_to_file(data_line):
+    # open the file
+    f = open(data_out_file_name, 'a')
+    # init the writer
+    writer = csv.writer(f)
+    # write the data 
+    writer.writerow(data_line)
+    # close the file 
+    f.close()
+    return 
