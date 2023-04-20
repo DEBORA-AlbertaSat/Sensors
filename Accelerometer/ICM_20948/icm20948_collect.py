@@ -72,7 +72,7 @@ if __name__ == '__main__':
     while True:
         # fetch icm data. 
         #If -1 returned, data was not fetched and ignore this loop
-        icm_data = query_icm20948(icm_obj);
+        icm_data = query_icm20948(icm_obj)
 
         if icm_data == -1:
             continue
