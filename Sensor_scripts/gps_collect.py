@@ -16,7 +16,7 @@ import csv
 
 header = ["SysTime [UTC]", "GPS Time [UTC]", "Lat [DD]", "Lon [DD]", "Alt [m]", "SatCount [-]", "Fix [-]"]
 
-data_out_file_name = "/home/albertasat/DEBORA/Sensors/Data/gps_data/test_data.csv"
+data_out_file_name = "/home/albertasat/DEBORA/Sensors/Data/gps_data/gps_data.csv"
 
 def write_to_csv_file(data_line):
     # open the file
@@ -58,59 +58,66 @@ def config_gps(serial_obj):
 	return
 
 def query_gps(serial_obj):
-    NMEA_sentence = serial_obj.readline().decode()
-
-    # Checks for valid NMEA 0183 sentence:
-    if NMEA_sentence[0] == "$":
-	    # Splitting NMEA Sentence
-        NMEA_sentence_arr = NMEA_sentence.split(",")
-
-        # If our sentence is not of type GGA, we will ignore it
-        if NMEA_sentence_arr[0] == "$GPGGA":
-			# Gets GPS UTC time (of fix) from NMEA sentence (from GPS satellite)
-            if len(NMEA_sentence_arr[1]) == 6+3:
-                split_time = (NMEA_sentence_arr[1]).split(".")
-                split_time = split_time[0]
-                gps_time = split_time[:2] + ":" + split_time[2:4]+ ":" + split_time[-2:]
-            else:
-                gps_time = " - " # If unable to retrieve UTC time from GPS Satallite
     
-			#Get GPS fix
-            fix_state = NMEA_sentence_arr[6]
-            if len(fix_state) <= 0:
-                fix_state = " - "
+    try:
+        NMEA_sentence = serial_obj.readline().decode()
+        
+        # Checks for valid NMEA 0183 sentence:
+        if NMEA_sentence[0] == "$":
+            # Splitting NMEA Sentence
+            NMEA_sentence_arr = NMEA_sentence.split(",")
 
-            #Get satellite count
-            sat = NMEA_sentence_arr[7].lstrip("0")
-            if len(sat) <= 0:
-                sat = " - "
+            # If our sentence is not of type GGA, we will ignore it
+            if NMEA_sentence_arr[0] == "$GPGGA":
+                # Gets GPS UTC time (of fix) from NMEA sentence (from GPS satellite)
+                if len(NMEA_sentence_arr[1]) == 6+3:
+                    split_time = (NMEA_sentence_arr[1]).split(".")
+                    split_time = split_time[0]
+                    gps_time = split_time[:2] + ":" + split_time[2:4]+ ":" + split_time[-2:]
+                else:
+                    gps_time = " - " # If unable to retrieve UTC time from GPS Satallite
+        
+                #Get GPS fix
+                fix_state = NMEA_sentence_arr[6]
+                if len(fix_state) <= 0:
+                    fix_state = " - "
 
-            # Extracting DDM latitude, longitude and altitude
-            if len(NMEA_sentence_arr[2]) > 0:
-                lat = nmea_parse(NMEA_sentence_arr[2])
-                lon = nmea_parse(NMEA_sentence_arr[4])
-            else:
-                lat = " - "
-                lon = " - "
+                #Get satellite count
+                sat = NMEA_sentence_arr[7].lstrip("0")
+                if len(sat) <= 0:
+                    sat = " - "
 
-            #Get altitude above mean sea level
-            if len(NMEA_sentence_arr[9]) != 0:
-                alt = NMEA_sentence_arr[9].lstrip("0")
-            else:
-                alt = " - "
+                # Extracting DDM latitude, longitude and altitude
+                if len(NMEA_sentence_arr[2]) > 0:
+                    lat = nmea_parse(NMEA_sentence_arr[2])
+                    lon = nmea_parse(NMEA_sentence_arr[4])
+                else:
+                    lat = " - "
+                    lon = " - "
 
-            # Create array from GPS data
-            gps_data = []
-            gps_data.append(gps_time)
-            gps_data.append(lat)
-            gps_data.append(lon)
-            gps_data.append(alt)
-            gps_data.append(sat)
-            gps_data.append(fix_state)
+                #Get altitude above mean sea level
+                if len(NMEA_sentence_arr[9]) != 0:
+                    alt = NMEA_sentence_arr[9].lstrip("0")
+                else:
+                    alt = " - "
 
-            return gps_data
+                # Create array from GPS data
+                gps_data = []
+                gps_data.append(gps_time)
+                gps_data.append(lat)
+                gps_data.append(lon)
+                gps_data.append(alt)
+                gps_data.append(sat)
+                gps_data.append(fix_state)
 
-    return -1
+                return gps_data
+
+        return -1
+    
+    except Exception as e:
+        # print("Error: ", e)
+        time.sleep(1)
+        return -1
 
 
 if __name__ == '__main__':
