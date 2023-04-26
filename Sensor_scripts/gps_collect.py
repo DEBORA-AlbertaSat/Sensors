@@ -14,13 +14,13 @@ import csv
 # 2 = Valid (SBAS)
 # 3 = Invalid
 
-header = ["SysTime [UTC]", "GPS Time [UTC]", "Lat [DD]", "Lon [DD]", "Alt [m]", "SatCount [-]", "Fix [-]"]
+gps_header = ["SysTime [UTC]", "GPS Time [UTC]", "Lat [DD]", "Lon [DD]", "Alt [m]", "SatCount [-]", "Fix [-]"]
 
-data_out_file_name = "/home/albertasat/DEBORA/Sensors/Data/gps_data/gps_data.csv"
+gps_data_out_file_path = "/home/albertasat/DEBORA/Sensors/Data/gps_data/gps_data.csv"
 
-def write_to_csv_file(data_line):
+def write_to_file(data_line):
     # open the file
-    f = open(data_out_file_name, 'a')
+    f = open(gps_data_out_file_path, 'a')
     # init the writer
     writer = csv.writer(f)
     # write the data
@@ -31,7 +31,8 @@ def write_to_csv_file(data_line):
 
 #Initialize serial object
 def init_serial_obj():
-	serial_obj = serial.Serial(
+    print("\nGPS Serial port init ")
+    serial_obj = serial.Serial(
         port = '/dev/ttyS0',
         baudrate = 4800,
         parity = serial.PARITY_NONE,
@@ -39,7 +40,8 @@ def init_serial_obj():
         bytesize = serial.EIGHTBITS,
         timeout = 1
         )
-	return serial_obj
+    
+    return serial_obj
 
 # Function to parse NMEA DDM to DD
 def nmea_parse(gpgga):
@@ -49,16 +51,16 @@ def nmea_parse(gpgga):
 	return str(deg + minute)
 
 def config_gps(serial_obj):
+    print("\nGPS config Air mode and Hi sensitivity")
 	# Sends command to put in air mode, and high sensitivity
-	time.sleep(0.7)
-	txAir = "$PTNLSCR,,,,,,,3,,*5B\r\n"
-	txHiSense = "$PTNLSFS,H,0*38\r\n"
-	serial_obj.write(txAir.encode())
-	serial_obj.write(txHiSense.encode())
-	return
+    time.sleep(0.7)
+    txAir = "$PTNLSCR,,,,,,,3,,*5B\r\n"
+    txHiSense = "$PTNLSFS,H,0*38\r\n"
+    serial_obj.write(txAir.encode())
+    serial_obj.write(txHiSense.encode())
+    return
 
 def query_gps(serial_obj):
-    
     try:
         NMEA_sentence = serial_obj.readline().decode()
         
@@ -115,14 +117,14 @@ def query_gps(serial_obj):
         return -1
     
     except Exception as e:
-        # print("Error: ", e)
-        time.sleep(1)
+        print("GPS Error: ", e)
+        time.sleep(10)
         return -1
 
 
 if __name__ == '__main__':
     #write the header row
-    write_to_csv_file(header)
+    write_to_file(gps_header)
     #initialize the serial port
     serial_obj = init_serial_obj()
 
@@ -147,6 +149,6 @@ if __name__ == '__main__':
             data_row.extend(gps_data)
 
             #write data row to csv file
-            write_to_csv_file(data_row)
+            write_to_file(data_row)
 
         time.sleep(0.1)

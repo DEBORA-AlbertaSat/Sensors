@@ -10,14 +10,14 @@ from datetime import datetime, timezone
 # Accelerometer is measured in milli G's (G forces = m/s^2) [mg]
 # Gyroscope is measured in Degrees per second [DPS]
 # Magnetometer is measured in micro Teslas
-header = ["SysTime [UTC]", "Ax [mg]", "Ay [mg]", "Az [mg]", "Gx [DPS]","Gy [DPS]", "Gz [DPS]", "Mx [uT]", "My [uT]", "Mz [uT]" ] 
+icm_header = ["SysTime [UTC]", "Ax [mg]", "Ay [mg]", "Az [mg]", "Gx [DPS]","Gy [DPS]", "Gz [DPS]", "Mx [uT]", "My [uT]", "Mz [uT]" ] 
 
-data_out_file_name = "/home/albertasat/DEBORA/Sensors/Data/icm20948_data/test_data.csv"
+icm_data_out_file_path = "/home/albertasat/DEBORA/Sensors/Data/icm20948_data/icm_data.csv"
 
 
 def write_to_file(data_line):
     # open the file
-    f = open(data_out_file_name, 'a')
+    f = open(icm_data_out_file_path, 'a')
     # init the writer
     writer = csv.writer(f)
     # write the data 
@@ -28,7 +28,7 @@ def write_to_file(data_line):
 
 
 def init_icm20948():
-    print("\nSparkFun 9DoF ICM-20948 Sensor Init... \n")
+    print("\nSparkFun 9DoF ICM-20948 Sensor Init ")
     icm = qwiic_icm20948.QwiicIcm20948()
     if icm.connected == False:
         print("The Qwiic ICM20948 device isn't connected to the system. Please check your connection", \
@@ -42,27 +42,36 @@ def query_icm20948(icm_obj):
     #TODO: Check if icm data is valid. (i.e. length, data values, etc). If invalid return -1
     res = []
 
-    if icm_obj.dataReady():
-        icm_obj.getAgmt() # reads all axis data
-        res.append('{: 06d}'.format(icm_obj.axRaw))
-        res.append('{: 06d}'.format(icm_obj.ayRaw))
-        res.append('{: 06d}'.format(icm_obj.azRaw))
-        res.append('{: 06d}'.format(icm_obj.gxRaw))
-        res.append('{: 06d}'.format(icm_obj.gyRaw))
-        res.append('{: 06d}'.format(icm_obj.gzRaw))
-        res.append('{: 06d}'.format(icm_obj.mxRaw))
-        res.append('{: 06d}'.format(icm_obj.myRaw))
-        res.append('{: 06d}'.format(icm_obj.mzRaw))
-        
-        return res 
+    try:
+        if icm_obj.dataReady():
+            icm_obj.getAgmt() # reads all axis data
+            res.append('{: 06d}'.format(icm_obj.axRaw))
+            res.append('{: 06d}'.format(icm_obj.ayRaw))
+            res.append('{: 06d}'.format(icm_obj.azRaw))
+            res.append('{: 06d}'.format(icm_obj.gxRaw))
+            res.append('{: 06d}'.format(icm_obj.gyRaw))
+            res.append('{: 06d}'.format(icm_obj.gzRaw))
+            res.append('{: 06d}'.format(icm_obj.mxRaw))
+            res.append('{: 06d}'.format(icm_obj.myRaw))
+            res.append('{: 06d}'.format(icm_obj.mzRaw))
 
-    else:
+            if len(res) != 9 :
+                print("Invalid icm len")
+                return -1
+            return res 
+
+        else:
+            return -1
+        
+    except Exception as e:
+        print("ICM data read error: ", e)
+        time.sleep(10)
         return -1
 
 
 if __name__ == '__main__':
     #write the header row 
-    write_to_file(header)
+    write_to_file(icm_header)
     
     #initialize the ICM device
     icm_obj = init_icm20948()

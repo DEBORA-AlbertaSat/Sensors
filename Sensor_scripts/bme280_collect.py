@@ -8,13 +8,13 @@ import csv
 from datetime import datetime, timezone
 
 # Altitude is not an exact value. It is calculated from barometric pressure and is instead an equivalent value
-header = ["SysTime [UTC], Humidity [%RH], Pressure [Pa], Altitude [m], Temperature [C]"]
+bme_header = ["SysTime [UTC], Humidity [%RH], Pressure [Pa], Altitude [m], Temperature [C]"]
 
-data_out_file_name = "/home/albertasat/DEBORA/Sensors/Data/bme280_data/test_data.csv"
+bme_data_out_file_path = "/home/albertasat/DEBORA/Sensors/Data/bme280_data/bme_data.csv"
 
 def write_to_file(data_line):
     # open the file
-    f = open(data_out_file_name, 'a')
+    f = open(bme_data_out_file_path, 'a')
     # init the writer
     writer = csv.writer(f)
     # write the data 
@@ -25,7 +25,7 @@ def write_to_file(data_line):
 
 
 def init_bme280():
-    print("\nSparkFun BME280 Sensor Init... \n")
+    print("\nSparkFun BME280 Sensor Init ")
     bme = qwiic_bme280.QwiicBme280()
     if bme.connected == False:
         print("The Qwiic BME280 device isn't connected to the system. Please check your connection", \
@@ -43,28 +43,38 @@ def query_bme280(bme):
     #TODO: Check if data is valid. (i.e. length, data values, etc). If invalid return -1
     res = []
 
-    humidity = bme.humidity
-    pressure = bme.pressure
-    altitude = bme.altitude_meters
-    temperature = bme.temperature_celsius
+    try:
+        humidity = bme.humidity
+        pressure = bme.pressure
+        altitude = bme.altitude_meters
+        temperature = bme.temperature_celsius
 
-    # print("Humidity:\t%.3f" % humidity)
-    # print("Pressure:\t%.3f" % pressure)    
-    # print("Altitude:\t%.3f" % altitude)
-    # print("Temperature:\t%.2f" % temperature)       
-    # print("\n")
+        #FOR DEBUG
+        # print("Humidity:\t%.3f" % humidity)
+        # print("Pressure:\t%.3f" % pressure)    
+        # print("Altitude:\t%.3f" % altitude)
+        # print("Temperature:\t%.2f" % temperature)       
+        # print("\n")
 
-    res.append(humidity)
-    res.append(pressure)
-    res.append(altitude)
-    res.append(temperature)
-
-    return res
+        res.append(humidity)
+        res.append(pressure)
+        res.append(altitude)
+        res.append(temperature)
+        
+        if len(res) == 4:
+            return res
+        
+        return -1
+            
+    except Exception as e:
+        print("BME data read error: ", e)
+        time.sleep(10)
+        return -1
 
 
 if __name__ == '__main__':
     #write the header row 
-    write_to_file(header)
+    write_to_file(bme_header)
     
     #initialize the ICM device
     bme_obj = init_bme280()
@@ -74,10 +84,10 @@ if __name__ == '__main__':
     while True:
         #fetch bme data. 
         #if -1 returned, data was not fetched and ignore this loop
-        bme_data = query_bme280(bme_obj);
+        bme_data = query_bme280(bme_obj)
 
         if bme_data == -1:
-            break
+            continue
         else:
             #fetch system time
             sys_time = datetime.utcnow().strftime("%Y%m%dT%H:%M:%S.%f")
